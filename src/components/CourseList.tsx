@@ -1,10 +1,7 @@
 import type { CourseType } from "../types/CourseType"
 
 export default function CourseList({ courses }: { courses: CourseType[] }) {
-    const formatTime = (isoString: string) => {
-        const date = new Date(isoString);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-    };
+    const formatTime = (time: string) => time;
 
     return (
         <div className="space-y-3">
@@ -21,7 +18,7 @@ export default function CourseList({ courses }: { courses: CourseType[] }) {
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="font-semibold text-gray-900 text-lg">{course.name}</h3>
                             <span className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full">
-                                {course.prof}
+                                {course.professor}
                             </span>
                         </div>
 

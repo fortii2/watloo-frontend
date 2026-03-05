@@ -1,19 +1,33 @@
 import type { CourseType } from "../types/CourseType";
 
 export default function NextClass({ courses }: { courses: CourseType[] }) {
-    const { name, location, prof, beginTime, endTime } = courses[0] || {}
+    const toDateTime = (course: CourseType, time: string) => new Date(`${course.date}T${time}:00`);
 
-    const formatTime = (isoString?: string) => {
-        if (!isoString) return '';
-        const date = new Date(isoString);
-        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-    };
+    const sortedCourses = [...courses].sort((a, b) => {
+        const aStart = toDateTime(a, a.beginTime).getTime();
+        const bStart = toDateTime(b, b.beginTime).getTime();
+        return aStart - bStart;
+    });
+
+    const now = new Date();
+    const current = sortedCourses.find((course) => {
+        const start = toDateTime(course, course.beginTime);
+        const end = toDateTime(course, course.endTime);
+        return now >= start && now < end;
+    });
+    const upcoming = sortedCourses.find((course) => toDateTime(course, course.beginTime) >= now);
+    const selected = current ?? upcoming ?? sortedCourses[0];
+
+    const { name, location, professor, beginTime, endTime, date } = selected || {};
+
+    const formatTime = (time?: string) => time ?? '';
 
     const calculateRemainTime = () => {
-        if (!beginTime || !endTime) return { text: '0 min', label: 'Starts in' };
-        const now = new Date();
-        const start = new Date(beginTime);
-        const end = new Date(endTime);
+        if (!selected || !date || !beginTime || !endTime) {
+            return { text: '0 min', label: 'Starts in' };
+        }
+        const start = new Date(`${date}T${beginTime}:00`);
+        const end = new Date(`${date}T${endTime}:00`);
 
         if (now >= start && now < end) {
             const diffMs = end.getTime() - now.getTime();
@@ -66,7 +80,7 @@ export default function NextClass({ courses }: { courses: CourseType[] }) {
             <div className="flex-1 flex flex-col justify-center px-6 py-4">
                 <h2 className="text-4xl font-bold text-white mb-3 mt-6">{name}</h2>
                 <p className="text-blue-50 text-sm mb-2">📍 {location}</p>
-                <p className="text-blue-50 text-sm">👨‍🏫 {prof}</p>
+                <p className="text-blue-50 text-sm">👨‍🏫 {professor}</p>
             </div>
 
             <div className="border-t border-white/20 px-6 py-4 flex items-center justify-center">

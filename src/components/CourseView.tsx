@@ -4,9 +4,10 @@ import CourseList from "./CourseList"
 import WeekView from "./WeekView"
 
 export default function CourseView({ view, courses }: { view: string, courses: CourseType[] }) {
-    // Get today's courses
     const today = new Date().toISOString().split('T')[0];
-    const todayCourses = courses.filter(c => c.beginTime.startsWith(today));
+    const todayCourses = courses
+        .filter((c) => c.date === today)
+        .sort((a, b) => a.beginTime.localeCompare(b.beginTime));
 
     return (
         <div className="flex-1 overflow-y-auto px-6 pt-2 pb-32 bg-gray-50">

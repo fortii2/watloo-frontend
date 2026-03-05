@@ -7,6 +7,12 @@ import type { CourseType } from "./types/CourseType";
 
 type View = "today" | "week";
 
+interface CoursesResponse {
+  view: "day" | "week";
+  timezone: string;
+  courses: CourseType[];
+}
+
 export default function App() {
   const [view, setView] = useState<View>('today');
 
@@ -22,7 +28,9 @@ export default function App() {
       setError(null);
 
       try {
-        const res = await fetch(`/api/courses?view=${view}`, {
+        const requestView = view === "today" ? "day" : "week";
+
+        const res = await fetch(`/api/courses?view=${requestView}`, {
           headers: {
             "X-Telegram-User-Id": "246806391"
           },
@@ -30,9 +38,10 @@ export default function App() {
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = (await res.json()) as CourseType[];
+        const data = (await res.json()) as CoursesResponse;
+        const nextCourses = Array.isArray(data.courses) ? data.courses : [];
 
-        if (!cancelled) setCourses(data);
+        if (!cancelled) setCourses(nextCourses);
       } catch (e: unknown) {
         if (e instanceof Error) {
           setError(e.message)
