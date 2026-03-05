@@ -1,19 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import CourseView from "./components/CourseView";
 import Header from "./components/Header";
 import ViewSwitcher from "./components/ViewSwitcher";
-import { mockCourses } from "./data/courses";
+import type { CourseType } from "./types/CourseType";
+
+type View = "today" | "week";
 
 export default function App() {
-  const [view, setView] = useState<'today' | 'week'>('today');
+  const [view, setView] = useState<View>('today');
+
+  const [courses, setCourses] = useState<CourseType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(`/api/courses?view=${view}`, {
+          headers: {
+            "X-Telegram-User-Id": "246806391"
+          },
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = (await res.json()) as CourseType[];
+
+        if (!cancelled) setCourses(data);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          setError(e.message)
+        } else {
+          setError("Something went wrong")
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [view]);
 
   return (
     <div className="min-h-screen bg-blue-50 text-gray-900 font-sans selection:bg-blue-100">
       <div className="max-w-md mx-auto min-h-screen flex flex-col relative bg-gray-50 shadow-2xl overflow-hidden">
         <Header />
-        <CourseView view={view} courses={mockCourses} />
+
+        {loading && <div className="p-4">Loading...</div>}
+        {error && <div className="p-4 text-red-600">Error: {error}</div>}
+
+        {!loading && !error && (
+          <CourseView view={view} courses={courses} />
+        )}
+
         <ViewSwitcher view={view} onViewChange={setView} />
       </div>
     </div>
-  )
+  );
 }
