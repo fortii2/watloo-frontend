@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import CourseView from "./components/CourseView";
 import Header from "./components/Header";
 import ViewSwitcher from "./components/ViewSwitcher";
+import { buildApiUrl, extractApiError } from "./lib/api";
 import type { CourseType } from "./types/CourseType";
 
 type View = "today" | "week";
@@ -29,14 +30,17 @@ export default function App() {
 
       try {
         const requestView = view === "today" ? "day" : "week";
+        const requestUrl = buildApiUrl("/api/courses", { view: requestView });
 
-        const res = await fetch(`/api/courses?view=${requestView}`, {
+        const res = await fetch(requestUrl, {
           headers: {
             "X-Telegram-User-Id": "246806391"
           },
         });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          throw new Error(await extractApiError(res));
+        }
 
         const data = (await res.json()) as CoursesResponse;
         const nextCourses = Array.isArray(data.courses) ? data.courses : [];
